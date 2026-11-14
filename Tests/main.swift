@@ -178,7 +178,7 @@ for rows in 3...8 {
     let restored = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(sizeSettings))
     check(restored.effectiveVisibleRows == rows && restored.windowWidth == "wide", "window settings persist")
 }
-let many = (0..<60).map { Entry(path: "/tmp/example-\($0).txt", directory: false) }
+let many = (0..<60).map { Entry(path: expandedPath("/tmp") + "/example-\($0).txt", directory: false) }
 sizeSettings.kinds = [.text]; sizeSettings.roots = ["/tmp"]
 for limit in Settings.candidateLimits {
     sizeSettings.limit = limit
