@@ -28,7 +28,7 @@ Meet&See runs as a menu bar app. Press the hotkey, type, and open the result. It
 
 ## Install
 
-Download the latest zip from [Releases](https://github.com/JC-SYSU/meetsee/releases), unzip it, and move `觅见.app` to `/Applications` before enabling "Launch at login".
+Download the latest zip from [Releases](https://github.com/JC-SYSU/meetsee/releases), unzip it, and move `MeetSee.app` to `/Applications` before enabling "Launch at login". The app's display name is 觅见.
 
 The release binary is **ad-hoc signed**, not notarized by Apple. On first launch, macOS blocks it until you approve it:
 
@@ -39,7 +39,7 @@ The release binary is **ad-hoc signed**, not notarized by Apple. On first launch
 If the button does not appear, double-click the app again to re-trigger the check, or remove the quarantine flag manually:
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/觅见.app
+xattr -dr com.apple.quarantine /Applications/MeetSee.app
 ```
 
 Ad-hoc signatures do not have a stable designated requirement. After installing an update, macOS may ask again for Full Disk Access, Contacts, or Finder automation.

@@ -80,7 +80,7 @@ Local file and application search for macOS, with Chinese-friendly matching.
 - Apple Silicon (arm64)
 
 ### Install
-1. Unzip and move `觅见.app` to `/Applications`.
+1. Unzip and move `MeetSee.app` to `/Applications`.
 2. Double-click once, dismiss the warning.
 3. Open System Settings → Privacy & Security → Open Anyway.
 
