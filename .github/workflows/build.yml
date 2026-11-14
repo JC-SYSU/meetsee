@@ -1,0 +1,55 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun actool --version || true
+          cargo --version || rustup toolchain install stable --profile minimal
+
+      - name: Build
+        run: SIGNING_IDENTITY=- ./build.sh build/MeetSee.app
+
+      - name: Verify bundle
+        run: |
+          codesign -dv --verbose=2 build/MeetSee.app
+          codesign --verify --strict build/MeetSee.app
+          test "$(plutil -extract CFBundleIdentifier raw build/MeetSee.app/Contents/Info.plist)" = "cn.meetsee.app"
+          ls -l build/MeetSee.app/Contents/Helpers/meetsee-lokii-engine
+
+      # The full suite is `./test.sh`. It includes window, Metal, Contacts,
+      # and FSEvents tests that need a logged-in GUI session; keep the
+      # deterministic core subset in CI.
+      - name: Core tests
+        run: |
+          BUILD="$(mktemp -d)"
+          xcrun swiftc SearchCore.swift Tests/main.swift -o "$BUILD/tests"
+          "$BUILD/tests" "$BUILD/fixture"
+
+      - name: Contacts tests
+        run: bash Tests/test_contacts.sh
+
+      - name: Package artifact
+        run: |
+          ditto -c -k --keepParent build/MeetSee.app MeetSee-ci.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MeetSee-ci
+          path: MeetSee-ci.zip
+          if-no-files-found: error

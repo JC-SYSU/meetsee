@@ -1,0 +1,8 @@
+.DS_Store
+.serena/
+build/
+Engine/target/
+*.app
+*.zip
+*.dmg
+ThirdParty/lokii/target/

@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a search, UI, or permission problem
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include real personal file names, phone numbers, or contacts. Replace them with neutral examples.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Describe the actual result.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the exact query, the file name pattern, and the settings that matter.
+      placeholder: |
+        1. Open Meet&See with Command-Space
+        2. Type "example query"
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Search engine
+      options:
+        - Native
+        - Bundled Lokii engine
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "26.1"
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: Meet&See version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: If the file exists but does not appear, paste the result of the Diagnostics page. Remove personal paths first.
+    validations:
+      required: false
