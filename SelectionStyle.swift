@@ -3,8 +3,8 @@ import AppKit
 // Shared by live result rows and the settings samples.
 enum SelectionPaint {
     static let inverseSubtitleColor = NSColor.white.withAlphaComponent(0.72)
-    static func draw(_ style: HighlightStyle, in rect: NSRect, dark: Bool) {
-        let shape = NSBezierPath(roundedRect: rect, xRadius: 13, yRadius: 13)
+    static func draw(_ style: HighlightStyle, in rect: NSRect, dark: Bool, radius: CGFloat = 13) {
+        let shape = ContinuousCorners.bezier(in: rect, radius: radius)
         func color(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat, _ a: CGFloat) -> NSColor {
             NSColor(srgbRed: r, green: g, blue: b, alpha: a)
         }
@@ -18,7 +18,7 @@ enum SelectionPaint {
             NSGraphicsContext.restoreGraphicsState()
             return
         case .pearl:
-            colors = dark ? (color(1, 253 / 255, 250 / 255, 0.12), color(1, 254 / 255, 252 / 255, 0.07)) : (color(1, 253 / 255, 250 / 255, 0.84), color(1, 254 / 255, 252 / 255, 0.50))
+            colors = dark ? (color(1, 253 / 255, 250 / 255, 0.07), color(1, 254 / 255, 252 / 255, 0.12)) : (color(1, 253 / 255, 250 / 255, 0.50), color(1, 254 / 255, 252 / 255, 0.84))
         case .marker:
             color(0, 47 / 255, 167 / 255, 1).setFill(); shape.fill()
             return
@@ -47,6 +47,7 @@ enum SelectionPaint {
         }
 
     }
+
 }
 
 // Static CPU translation of light-lab.html's thin-medium shader. Two small
@@ -155,13 +156,13 @@ final class ThemeChoiceButton: NSButton {
     override func mouseEntered(with event: NSEvent) { hover = true; needsDisplay = true }
     override func mouseExited(with event: NSEvent) { hover = false; needsDisplay = true }
     override func drawFocusRingMask() {
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 2, dy: 2), xRadius: 8, yRadius: 8).fill()
+        ContinuousCorners.bezier(in: bounds.insetBy(dx: 2, dy: 2), radius: 8).fill()
     }
     override var focusRingMaskBounds: NSRect { bounds }
     override func draw(_ dirtyRect: NSRect) {
         let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let selected = state == .on
-        let shape = NSBezierPath(roundedRect: bounds.insetBy(dx: 2, dy: 2), xRadius: 8, yRadius: 8)
+        let shape = ContinuousCorners.bezier(in: bounds.insetBy(dx: 2, dy: 2), radius: 8)
         // Match the original HTML study: #293b4d selected, #fff9 idle.
         let ink = NSColor(srgbRed: 41 / 255, green: 59 / 255, blue: 77 / 255, alpha: 1)
         let fill = selected ? ink : NSColor.white.withAlphaComponent(dark ? (hover ? 0.12 : 0.07) : (hover ? 0.85 : 0.60))
@@ -178,10 +179,10 @@ final class ThemeChoiceButton: NSButton {
         }
         let swatch = NSRect(x: 12, y: (bounds.height - 20) / 2, width: 22, height: 20)
         NSGraphicsContext.saveGraphicsState()
-        NSBezierPath(roundedRect: swatch, xRadius: 6, yRadius: 6).addClip()
+        ContinuousCorners.bezier(in: swatch, radius: 6).addClip()
         (dark ? NSColor(white: 0.2, alpha: 1) : NSColor(srgbRed: 0.94, green: 0.96, blue: 0.96, alpha: 1)).setFill()
         swatch.fill()
-        SelectionPaint.draw(style, in: swatch, dark: dark)
+        SelectionPaint.draw(style, in: swatch, dark: dark, radius: 6)
         NSGraphicsContext.restoreGraphicsState()
         let textColor = selected ? NSColor.white : (dark ? NSColor.labelColor : NSColor(srgbRed: 66 / 255, green: 75 / 255, blue: 85 / 255, alpha: 1))
         let attrs: [NSAttributedString.Key: Any] = [.font: font ?? NSFont.systemFont(ofSize: 13), .foregroundColor: textColor]
@@ -266,10 +267,10 @@ final class StylePreview: NSView {
     override var isFlipped: Bool { true }
     override func draw(_ dirtyRect: NSRect) {
         let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let backdrop = NSBezierPath(roundedRect: bounds, xRadius: 16, yRadius: 16)
+        let backdrop = ContinuousCorners.bezier(in: bounds, radius: 16)
         NSGradient(starting: dark ? NSColor(srgbRed: 0.22, green: 0.27, blue: 0.30, alpha: 1) : NSColor(srgbRed: 0.88, green: 0.88, blue: 0.82, alpha: 1), ending: dark ? NSColor(srgbRed: 0.18, green: 0.24, blue: 0.31, alpha: 1) : NSColor(srgbRed: 0.77, green: 0.84, blue: 0.88, alpha: 1))!.draw(in: backdrop, angle: 35)
         if nativeGlass == nil {
-            let glass = NSBezierPath(roundedRect: bounds.insetBy(dx: 20, dy: 18), xRadius: 19, yRadius: 19)
+            let glass = ContinuousCorners.bezier(in: bounds.insetBy(dx: 20, dy: 18), radius: 19)
             (dark ? NSColor(srgbRed: 0.16, green: 0.19, blue: 0.22, alpha: 0.90) : NSColor(srgbRed: 0.97, green: 0.98, blue: 0.99, alpha: 0.84)).setFill(); glass.fill()
             // White-overlay preview disabled: tintColor is evaluated on the actual panel.
             // NSColor.white.withAlphaComponent(whiteOpacity).setFill(); glass.fill()
@@ -309,7 +310,7 @@ final class WhiteOverlayView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override func draw(_ dirtyRect: NSRect) {
         NSColor.white.withAlphaComponent(opacity).setFill()
-        NSBezierPath(roundedRect: bounds, xRadius: 22, yRadius: 22).fill()
+        ContinuousCorners.bezier(in: bounds, radius: 22).fill()
     }
 }
 

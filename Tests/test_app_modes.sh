@@ -14,6 +14,6 @@ source = source.replace('NSApp.setActivationPolicy(.regular)', 'NSApp.setActivat
 (build/'files').mkdir(); (build/'files/ONLY_NATIVE.txt').touch()
 PY
 cp Brand/Signature-light.pdf Brand/Signature-dark.pdf Brand/AboutBrand-light.pdf Brand/AboutBrand-dark.pdf "$BUILD/"
-xcrun swiftc -g -swift-version 5 SearchCore.swift ContactsSearch.swift LokiiSearch.swift SystemSettingsSearch.swift SearchDiagnostics.swift IndexWatcher.swift VignetteView.swift HDRSelection.swift SelectionStyle.swift NativeUI.swift MenuBarIcon.swift BrandSignature.swift BrandAboutView.swift PinnedItemsUI.swift LaunchEnvironment.swift "$BUILD/main.swift" -o "$BUILD/mode-tests" -framework AppKit -framework Carbon -framework ServiceManagement -framework CoreServices -framework Contacts
+xcrun swiftc ContinuousCorners.swift -g -swift-version 5 SearchCore.swift ContactsSearch.swift LokiiSearch.swift SystemSettingsSearch.swift SearchDiagnostics.swift IndexWatcher.swift VignetteView.swift HDRSelection.swift SelectionStyle.swift NativeUI.swift MenuBarIcon.swift BrandSignature.swift BrandAboutView.swift PinnedItemsUI.swift LaunchEnvironment.swift "$BUILD/main.swift" -o "$BUILD/mode-tests" -framework AppKit -framework Carbon -framework ServiceManagement -framework CoreServices -framework Contacts
 QUICKFIND_DATA_DIR="$BUILD/data" QUICKFIND_ROOTS="$BUILD/files" "$BUILD/mode-tests" "$BUILD/files" "$BUILD/觅见.app/Contents/Helpers/meetsee-lokii-engine"
 echo "Mode integration artifacts: $BUILD"

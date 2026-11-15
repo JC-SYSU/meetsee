@@ -16,6 +16,6 @@ source = source.replace('NSApp.setActivationPolicy(.regular)', 'NSApp.setActivat
 (Path(sys.argv[1])/'files').mkdir()
 PY
 cp Brand/Signature-light.pdf Brand/Signature-dark.pdf Brand/AboutBrand-light.pdf Brand/AboutBrand-dark.pdf "$BUILD/"
-xcrun swiftc -swift-version 5 SearchCore.swift ContactsSearch.swift LokiiSearch.swift SystemSettingsSearch.swift SearchDiagnostics.swift IndexWatcher.swift VignetteView.swift HDRSelection.swift SelectionStyle.swift NativeUI.swift MenuBarIcon.swift BrandSignature.swift BrandAboutView.swift PinnedItemsUI.swift LaunchEnvironment.swift "$BUILD/main.swift" -o "$BUILD/app-tests" -framework AppKit -framework Carbon -framework ServiceManagement -framework CoreServices -framework Contacts
+xcrun swiftc ContinuousCorners.swift -swift-version 5 SearchCore.swift ContactsSearch.swift LokiiSearch.swift SystemSettingsSearch.swift SearchDiagnostics.swift IndexWatcher.swift VignetteView.swift HDRSelection.swift SelectionStyle.swift NativeUI.swift MenuBarIcon.swift BrandSignature.swift BrandAboutView.swift PinnedItemsUI.swift LaunchEnvironment.swift "$BUILD/main.swift" -o "$BUILD/app-tests" -framework AppKit -framework Carbon -framework ServiceManagement -framework CoreServices -framework Contacts
 QUICKFIND_DATA_DIR="$BUILD/data" "$BUILD/app-tests" "$BUILD/files"
 echo "Contacts test artifacts: $BUILD"

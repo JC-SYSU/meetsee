@@ -8,11 +8,13 @@ echo "Test workspace kept at $BUILD"
 bash Tests/test_contacts.sh
 xcrun swiftc VignetteView.swift Tests/VignetteTests.swift -o "$BUILD/vignette-tests" -framework AppKit
 "$BUILD/vignette-tests"
-xcrun swiftc SearchCore.swift HDRSelection.swift SelectionStyle.swift Tests/SelectionStyleTests.swift -o "$BUILD/selection-tests" -framework AppKit
+xcrun swiftc ContinuousCorners.swift SearchCore.swift HDRSelection.swift SelectionStyle.swift Tests/SelectionStyleTests.swift -o "$BUILD/selection-tests" -framework AppKit
 "$BUILD/selection-tests"
-xcrun swiftc SearchCore.swift NativeUI.swift Tests/NativeUITests.swift -o "$BUILD/native-ui-tests" -framework AppKit -framework QuartzCore
+xcrun swiftc ContinuousCorners.swift SearchCore.swift HDRSelection.swift SelectionStyle.swift Tests/ContinuousCornersTests.swift -o "$BUILD/continuous-corners-tests" -framework AppKit
+"$BUILD/continuous-corners-tests"
+xcrun swiftc ContinuousCorners.swift SearchCore.swift NativeUI.swift Tests/NativeUITests.swift -o "$BUILD/native-ui-tests" -framework AppKit -framework QuartzCore
 "$BUILD/native-ui-tests"
-xcrun swiftc SearchCore.swift NativeUI.swift Tests/SettingsControlsTests.swift -o "$BUILD/settings-controls-tests" -framework AppKit -framework QuartzCore
+xcrun swiftc ContinuousCorners.swift SearchCore.swift NativeUI.swift Tests/SettingsControlsTests.swift -o "$BUILD/settings-controls-tests" -framework AppKit -framework QuartzCore
 "$BUILD/settings-controls-tests"
 xcrun swiftc BrandSignature.swift Tests/BrandSignatureTests.swift -o "$BUILD/signature-tests" -framework AppKit
 "$BUILD/signature-tests" "$PWD/Brand"
@@ -32,7 +34,7 @@ xcrun swiftc SearchCore.swift SystemSettingsSearch.swift SearchDiagnostics.swift
 "$BUILD/diagnostics-tests"
 xcrun swiftc SearchCore.swift SystemSettingsSearch.swift Tests/PinyinTests.swift -o "$BUILD/pinyin-tests"
 "$BUILD/pinyin-tests"
-xcrun swiftc SearchCore.swift NativeUI.swift Tests/CandidateShortcutTests.swift -o "$BUILD/candidate-shortcut-tests" -framework AppKit -framework QuartzCore
+xcrun swiftc ContinuousCorners.swift SearchCore.swift NativeUI.swift Tests/CandidateShortcutTests.swift -o "$BUILD/candidate-shortcut-tests" -framework AppKit -framework QuartzCore
 "$BUILD/candidate-shortcut-tests"
 
 xcrun swiftc SearchCore.swift SystemSettingsSearch.swift Tests/PinnedItemsTests.swift -o "$BUILD/pinned-tests"
@@ -41,14 +43,14 @@ xcrun swiftc SearchCore.swift SystemSettingsSearch.swift Tests/SearchReference.s
 "$BUILD/application-priority-tests"
 xcrun swiftc LaunchEnvironment.swift Tests/LaunchEnvironmentTests.swift -o "$BUILD/launch-environment-tests" -framework AppKit
 "$BUILD/launch-environment-tests"
-xcrun swiftc SearchCore.swift NativeUI.swift Tests/CandidateTextLayoutTests.swift -o "$BUILD/candidate-text-layout-tests" -framework AppKit -framework QuartzCore
+xcrun swiftc ContinuousCorners.swift SearchCore.swift NativeUI.swift Tests/CandidateTextLayoutTests.swift -o "$BUILD/candidate-text-layout-tests" -framework AppKit -framework QuartzCore
 "$BUILD/candidate-text-layout-tests"
-xcrun swiftc SearchCore.swift NativeUI.swift Tests/PinnedStatusBadgeTests.swift -o "$BUILD/pinned-status-badge-tests" -framework AppKit -framework QuartzCore
+xcrun swiftc ContinuousCorners.swift SearchCore.swift NativeUI.swift Tests/PinnedStatusBadgeTests.swift -o "$BUILD/pinned-status-badge-tests" -framework AppKit -framework QuartzCore
 "$BUILD/pinned-status-badge-tests"
-xcrun swiftc HDRSelection.swift Tests/HDRSelectionTests.swift -o "$BUILD/hdr-selection-tests" -framework AppKit -framework Metal -framework QuartzCore
+xcrun swiftc ContinuousCorners.swift HDRSelection.swift Tests/HDRSelectionTests.swift -o "$BUILD/hdr-selection-tests" -framework AppKit -framework Metal -framework QuartzCore
 "$BUILD/hdr-selection-tests"
 
-xcrun swiftc SearchCore.swift HDRSelection.swift SelectionStyle.swift Tests/HDRRowIntegrationTests.swift -o "$BUILD/hdr-row-tests" -framework AppKit
+xcrun swiftc ContinuousCorners.swift SearchCore.swift HDRSelection.swift SelectionStyle.swift Tests/HDRRowIntegrationTests.swift -o "$BUILD/hdr-row-tests" -framework AppKit
 "$BUILD/hdr-row-tests"
 xcrun swiftc SearchCore.swift SystemSettingsSearch.swift Tests/CandidateRefreshTests.swift -o "$BUILD/candidate-refresh-tests"
 "$BUILD/candidate-refresh-tests"

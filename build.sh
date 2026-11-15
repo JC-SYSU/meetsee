@@ -20,7 +20,7 @@ export SIGNING_IDENTITY
 mkdir -p "$(dirname "$APP")" "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # Build and sign the bundled search engine before the app.
 bash Tools/build-lokii-engine.sh "$APP"
-xcrun swiftc -O -swift-version 5 SearchCore.swift ContactsSearch.swift LokiiSearch.swift SystemSettingsSearch.swift SearchDiagnostics.swift IndexWatcher.swift VignetteView.swift HDRSelection.swift SelectionStyle.swift NativeUI.swift MenuBarIcon.swift BrandSignature.swift BrandAboutView.swift PinnedItemsUI.swift LaunchEnvironment.swift main.swift -o "$APP/Contents/MacOS/QuickFind" -framework AppKit -framework Carbon -framework ServiceManagement -framework CoreServices -framework Contacts
+xcrun swiftc ContinuousCorners.swift -O -swift-version 5 SearchCore.swift ContactsSearch.swift LokiiSearch.swift SystemSettingsSearch.swift SearchDiagnostics.swift IndexWatcher.swift VignetteView.swift HDRSelection.swift SelectionStyle.swift NativeUI.swift MenuBarIcon.swift BrandSignature.swift BrandAboutView.swift PinnedItemsUI.swift LaunchEnvironment.swift main.swift -o "$APP/Contents/MacOS/QuickFind" -framework AppKit -framework Carbon -framework ServiceManagement -framework CoreServices -framework Contacts
 cp Brand/Signature-light.pdf Brand/Signature-dark.pdf Brand/AboutBrand-light.pdf Brand/AboutBrand-dark.pdf "$APP/Contents/Resources/"
 mkdir -p "$APP/Contents/Resources/Licenses"
 cp LICENSE "$APP/Contents/Resources/Licenses/GPL-3.0.txt"

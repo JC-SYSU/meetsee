@@ -51,7 +51,7 @@ import AppKit
             }
         }
         print("PASS: compact theme buttons, tooltips, focus eligibility and light/dark on/off swatches")
-        print("PASS: all four buttons track their full surface in both states; outside and disabled regions are excluded")
+        print("PASS: all theme buttons track their full surface in both states; outside and disabled regions are excluded")
         let preview = StylePreview(frame: NSRect(x: 0, y: 0, width: 480, height: 170))
         let content = preview.subviews.last!
         let motion = NSView(frame: .zero)
@@ -116,9 +116,9 @@ import AppKit
                     precondition(abs(solid.blueComponent - (46 / 255 * 0.50 + backdrop * 0.50)) < 0.03)
                 }
             }
-            precondition(Set(samples).count == 4, "All four styles must render distinctly")
+            precondition(Set(samples).count == HighlightStyle.allCases.count, "All styles must render distinctly")
         }
-        print("PASS: four selection styles rendered in light and dark palettes")
+        print("PASS: all selection styles rendered in light and dark palettes")
         precondition(abs(SelectionPaint.inverseSubtitleColor.alphaComponent - 0.72) < 0.001)
         precondition(HighlightStyle(rawValue: "mist") == .mist, "Existing theme preferences must survive rename")
         precondition(HighlightStyle.mist.title.contains("天青"))
@@ -167,4 +167,5 @@ import AppKit
         print("PASS: celadon rename compatibility, 160% light, bounded reusable textures and light/dark material fields")
 
     }
+
 }

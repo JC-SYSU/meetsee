@@ -16,25 +16,10 @@ enum ScanMotionStyle: String, CaseIterable {
 enum SearchSurfaceGeometry {
     static let radius: CGFloat = 22
     static func path(in bounds: CGRect, radius: CGFloat = radius, inset: CGFloat = 0.25) -> CGPath {
-        CGPath(roundedRect: bounds.insetBy(dx: inset, dy: inset),
-               cornerWidth: radius, cornerHeight: radius, transform: nil)
+        ContinuousCorners.path(in: bounds.insetBy(dx: inset, dy: inset), radius: radius)
     }
-    // Start halfway through the upper-left arc; the opposite point is lower-right.
     static func orbitPath(in bounds: CGRect, radius: CGFloat, inset: CGFloat) -> CGPath {
-        let r = bounds.insetBy(dx: inset, dy: inset)
-        let c = min(radius, min(r.width, r.height) / 2)
-        let path = CGMutablePath()
-        let tl = CGPoint(x: r.minX + c, y: r.maxY - c)
-        path.addArc(center: tl, radius: c, startAngle: .pi * 0.75, endAngle: .pi, clockwise: false)
-        path.addLine(to: CGPoint(x: r.minX, y: r.minY + c))
-        path.addArc(center: CGPoint(x: r.minX + c, y: r.minY + c), radius: c, startAngle: .pi, endAngle: .pi * 1.5, clockwise: false)
-        path.addLine(to: CGPoint(x: r.maxX - c, y: r.minY))
-        path.addArc(center: CGPoint(x: r.maxX - c, y: r.minY + c), radius: c, startAngle: .pi * 1.5, endAngle: .pi * 2, clockwise: false)
-        path.addLine(to: CGPoint(x: r.maxX, y: r.maxY - c))
-        path.addArc(center: CGPoint(x: r.maxX - c, y: r.maxY - c), radius: c, startAngle: 0, endAngle: .pi * 0.5, clockwise: false)
-        path.addLine(to: CGPoint(x: r.minX + c, y: r.maxY))
-        path.addArc(center: tl, radius: c, startAngle: .pi * 0.5, endAngle: .pi * 0.75, clockwise: false)
-        path.closeSubpath(); return path
+        ContinuousCorners.orbit(in: bounds.insetBy(dx: inset, dy: inset), radius: radius)
     }
 }
 
@@ -109,8 +94,7 @@ final class ScanMotionView: NSView {
             }
         case .orbit:
             let path = compact ? CGPath(ellipseIn: r, transform: nil) : SearchSurfaceGeometry.orbitPath(in: bounds, radius: cornerRadius, inset: outlineInset)
-            let radius = min(cornerRadius, min(r.width, r.height) / 2)
-            let perimeter = compact ? CGFloat.pi * r.width : 2 * (r.width + r.height - 4 * radius) + 2 * radius * CGFloat.pi
+            let perimeter = compact ? CGFloat.pi * r.width : ContinuousCorners.length(of: path)
             let rainbow = CAGradientLayer(); rainbow.frame = bounds
             rainbow.colors = [NSColor.systemCyan, .systemBlue, .systemPurple, .systemPink, .systemOrange].map { $0.cgColor }
             rainbow.startPoint = CGPoint(x: 0, y: 1); rainbow.endPoint = CGPoint(x: 1, y: 0)
@@ -153,7 +137,7 @@ final class ScanMotionView: NSView {
                 }
             }
         case .flow:
-            let clip = CALayer(); clip.frame = bounds; clip.cornerRadius = compact ? 2 : cornerRadius; clip.masksToBounds = true
+            let clip = CALayer(); clip.frame = bounds; clip.cornerRadius = compact ? 2 : 0; clip.masksToBounds = true
             if compact { clip.frame = CGRect(x: 0, y: (bounds.height - 3) / 2, width: bounds.width, height: 3); clip.backgroundColor = blue.withAlphaComponent(0.15).cgColor }
             if !compact {
                 let mask = CAShapeLayer(); mask.frame = clip.bounds
@@ -206,14 +190,14 @@ class SettingsActionButton: NSButton {
     override func mouseEntered(with event: NSEvent) { isHovered = isEnabled; needsDisplay = true }
     override func mouseExited(with event: NSEvent) { isHovered = false; needsDisplay = true }
     override func drawFocusRingMask() {
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 7, yRadius: 7).fill()
+        ContinuousCorners.bezier(in: bounds.insetBy(dx: 1, dy: 1), radius: 7).fill()
     }
     override var focusRingMaskBounds: NSRect { bounds }
     override func draw(_ dirtyRect: NSRect) {
         let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let strong = prominent || state == .on
         let ink = NSColor(srgbRed: 41 / 255, green: 59 / 255, blue: 77 / 255, alpha: 1)
-        let shape = NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 7, yRadius: 7)
+        let shape = ContinuousCorners.bezier(in: bounds.insetBy(dx: 1, dy: 1), radius: 7)
         let fill = strong ? ink : NSColor.white.withAlphaComponent(dark ? 0.07 : 0.60)
         fill.withAlphaComponent(isEnabled ? fill.alphaComponent : fill.alphaComponent * 0.35).setFill(); shape.fill()
         let border = dark ? NSColor.white.withAlphaComponent(0.18) : (strong ? ink : NSColor(srgbRed: 211 / 255, green: 216 / 255, blue: 220 / 255, alpha: 1))
@@ -245,7 +229,7 @@ final class SettingsCheckbox: SettingsActionButton {
     override func accessibilityValue() -> Any? { NSNumber(value: state.rawValue) }
     private var boxRect: NSRect { NSRect(x: 3, y: (bounds.height - 16) / 2, width: 16, height: 16) }
     override func drawFocusRingMask() {
-        NSBezierPath(roundedRect: boxRect, xRadius: 4, yRadius: 4).fill()
+        ContinuousCorners.bezier(in: boxRect, radius: 4).fill()
     }
     override var focusRingMaskBounds: NSRect { boxRect }
     override func draw(_ dirtyRect: NSRect) {
@@ -253,10 +237,10 @@ final class SettingsCheckbox: SettingsActionButton {
         let checked = state != .off
         let ink = NSColor(srgbRed: 41 / 255, green: 59 / 255, blue: 77 / 255, alpha: 1)
         let box = boxRect
-        let shape = NSBezierPath(roundedRect: box, xRadius: 4, yRadius: 4)
+        let shape = ContinuousCorners.bezier(in: box, radius: 4)
         if isHovered && isEnabled {
             (dark ? NSColor.white : ink).withAlphaComponent(0.10).setFill()
-            NSBezierPath(roundedRect: box.insetBy(dx: -3, dy: -3), xRadius: 7, yRadius: 7).fill()
+            ContinuousCorners.bezier(in: box.insetBy(dx: -3, dy: -3), radius: 7).fill()
         }
         let fill = checked ? ink : NSColor.white.withAlphaComponent(dark ? 0.07 : 0.6)
         fill.withAlphaComponent(isEnabled ? fill.alphaComponent : fill.alphaComponent * 0.35).setFill(); shape.fill()
@@ -545,12 +529,12 @@ enum SettingsNavigation {
 
 final class SettingsSidebarButton: SettingsActionButton {
     override func drawFocusRingMask() {
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 10, yRadius: 10).fill()
+        ContinuousCorners.bezier(in: bounds.insetBy(dx: 1, dy: 1), radius: 10).fill()
     }
     override func draw(_ dirtyRect: NSRect) {
         let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let selected = state == .on
-        let shape = NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 10, yRadius: 10)
+        let shape = ContinuousCorners.bezier(in: bounds.insetBy(dx: 1, dy: 1), radius: 10)
         if selected {
             (dark ? NSColor(srgbRed: 0.23, green: 0.28, blue: 0.25, alpha: 1)
                   : NSColor(srgbRed: 0.88, green: 0.91, blue: 0.87, alpha: 0.85)).setFill()
@@ -597,7 +581,7 @@ final class CandidateShortcutBadge: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let dark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         (onBlue ? NSColor.white.withAlphaComponent(0.16) : NSColor.labelColor.withAlphaComponent(dark ? 0.08 : 0.045)).setFill()
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5), xRadius: 6, yRadius: 6).fill()
+        ContinuousCorners.bezier(in: bounds.insetBy(dx: 0.5, dy: 0.5), radius: 6).fill()
         let text = (showNumber ? "⌘\(number)" : (restingLabel ?? "")) as NSString
         let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium), .foregroundColor: onBlue ? NSColor.white.withAlphaComponent(available ? 1 : 0.5) : (available ? NSColor.secondaryLabelColor : NSColor.disabledControlTextColor)]
         let size = text.size(withAttributes: attrs)
@@ -660,7 +644,7 @@ final class PinnedStatusBadge: NSView {
         let color = dark ? NSColor(srgbRed: 68/255, green: 100/255, blue: 127/255, alpha: 1)
             : NSColor(srgbRed: 62/255, green: 88/255, blue: 112/255, alpha: 1)
         (onBlue ? NSColor.white.withAlphaComponent(0.20) : color).setFill()
-        NSBezierPath(roundedRect: bounds, xRadius: 2.5, yRadius: 2.5).fill()
+        ContinuousCorners.bezier(in: bounds, radius: 2.5).fill()
         let text = "置顶" as NSString
         let attrs: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 8, weight: .medium), .foregroundColor: NSColor.white]
         let textSize = text.size(withAttributes: attrs)

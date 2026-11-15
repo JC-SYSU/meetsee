@@ -327,7 +327,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
             let material = NSVisualEffectView(frame: surfaceFrame)
             material.autoresizingMask = [.width, .height]
             material.material = .hudWindow; material.blendingMode = .behindWindow; material.state = .active
-            material.wantsLayer = true; material.layer?.cornerRadius = 22; material.layer?.masksToBounds = true
+            material.wantsLayer = true; material.layer?.cornerRadius = 22; material.layer?.cornerCurve = .continuous; material.layer?.masksToBounds = true
             material.addSubview(view); host.addSubview(material)
         }
         let outline = GlassOutline(frame: surfaceFrame)
@@ -1151,7 +1151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
                          ("⌘ ↵", "在 Finder 中定位"), ("⌘ I", "打开原生简介"),
                          ("⌘ C", "联系人：复制纯数字主号；选中文字时仍复制文字"), ("Esc", "收起搜索面板")]
         for (i, shortcut) in shortcuts.enumerated() {
-            let tag = NSBox(frame: NSRect(x: 150, y: 170 + i * 34, width: 88, height: 26))
+            let tag = ContinuousKeycapBox(frame: NSRect(x: 150, y: 170 + i * 34, width: 88, height: 26))
             tag.boxType = .custom; tag.titlePosition = .noTitle
             tag.borderWidth = 0.5; tag.cornerRadius = 6
             tag.fillColor = .quaternaryLabelColor; tag.borderColor = .separatorColor
@@ -1180,7 +1180,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
         stylePreview.glassTintStrength = CGFloat(settings.effectiveGlassTintStrength)
         stylePreview.setAccessibilityElement(true); stylePreview.setAccessibilityRole(.image); stylePreview.setAccessibilityLabel(draftStyle.title + "预览")
         appearancePage.addSubview(stylePreview)
-        themeButtons = HighlightStyle.allCases.enumerated().map { index, style in
+        themeButtons = HighlightStyle.selectable.enumerated().map { index, style in
             let choice = ThemeChoiceButton(style: style, frame: NSRect(x: 484, y: 95 + CGFloat(index) * 44, width: 144, height: 36))
             choice.state = style == draftStyle ? .on : .off
             choice.target = self; choice.action = #selector(selectHighlight(_:))

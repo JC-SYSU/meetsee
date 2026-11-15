@@ -12,6 +12,7 @@ final class HDRSelectionRenderer {
     let device: MTLDevice
     let queue: MTLCommandQueue
     let pipeline: MTLRenderPipelineState
+    private var contourTextures: [String: MTLTexture] = [:]
     struct Parameters { var size: SIMD2<Float>; var headroom: Float; var dark: Float; var material: Float = 0 }
     static func usableHeadroom(_ current: CGFloat, material: HDRSelectionMaterial = .celadon) -> Float {
         Float(min(material == .celadon ? 1.6 : 1.3, max(1, current.isFinite ? current : 1)))
@@ -30,11 +31,13 @@ final class HDRSelectionRenderer {
             float2 p[3] = {float2(-1,-1),float2(3,-1),float2(-1,3)};
             V v; v.position=float4(p[id],0,1); v.uv=float2(p[id].x*.5+.5,.5-p[id].y*.5); return v;
         }
-        fragment float4 fragmentMain(V v [[stage_in]], constant P &p [[buffer(0)]]) {
+        fragment float4 fragmentMain(V v [[stage_in]], constant P &p [[buffer(0)]], texture2d<float, access::read> contour [[texture(0)]]) {
             float2 uv=v.uv;
-            float2 q=abs((uv-.5)*p.size)-p.size*.5+min(13.,p.size.y*.5);
-            float distance=min(max(q.x,q.y),0.)+length(max(q,0.))-min(13.,p.size.y*.5);
-            float coverage=1.-smoothstep(-.6,.6,distance);
+            uint2 pixel=min(uint2(uv*float2(contour.get_width(),contour.get_height())),
+                            uint2(contour.get_width()-1,contour.get_height()-1));
+            float distance=contour.read(pixel).r;
+            float aa=.6*p.size.x/float(contour.get_width());
+            float coverage=1.-smoothstep(-aa,aa,distance);
             if(p.material>1.5) {
                 // Opaque Klein-blue-inspired #002FA7. Lift the blue spectrum
                 // proportionally, never add neutral white or desaturate the body.
@@ -44,10 +47,10 @@ final class HDRSelectionRenderer {
                 return float4(base*(blue/base.b)*coverage,coverage);
             }
             if(p.material>.5) {
-                // Top #FFFDFA -> bottom #FFFEFC, before illumination. Keep
+                // Top dim -> bottom bright, before illumination. Keep
                 // translucency separate from a restrained, neutral EDR lift.
                 float3 tint=mix(float3(1.,253./255.,250./255.),float3(1.,254./255.,252./255.),uv.y);
-                float alpha=mix(mix(.84,.50,uv.y),mix(.12,.07,uv.y),p.dark);
+                float alpha=mix(mix(.50,.84,uv.y),mix(.07,.12,uv.y),p.dark);
                 float3 linear=pow(tint,float3(2.2));
                 float3 light=linear*alpha*(1.+(min(p.headroom,1.3)-1.)*mix(1.,.10,p.dark));
                 // Retain the original fine white outline without a separate
@@ -92,7 +95,30 @@ final class HDRSelectionRenderer {
         descriptor.colorAttachments[0].pixelFormat = .rgba16Float
         pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
     }
+    private func contourTexture(width: Int, height: Int, size: SIMD2<Float>) -> MTLTexture? {
+        let key = "\(width):\(height):\(size.x):\(size.y)"
+        if let cached = contourTextures[key] { return cached }
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r32Float, width: width, height: height, mipmapped: false)
+        descriptor.storageMode = .shared; descriptor.usage = .shaderRead
+        guard let texture = device.makeTexture(descriptor: descriptor) else { return nil }
+        let field = ContinuousCorners.Field(size: CGSize(width: CGFloat(size.x), height: CGFloat(size.y)), radius: 13)
+        var distances = [Float](repeating: 0, count: width * height)
+        for y in 0..<height {
+            for x in 0..<width {
+                distances[y * width + x] = Float(field.sample(x: (Double(x)+0.5)*Double(size.x)/Double(width),
+                    y: (Double(y)+0.5)*Double(size.y)/Double(height)).distance)
+            }
+        }
+        distances.withUnsafeBytes { bytes in
+            texture.replace(region: MTLRegionMake2D(0,0,width,height), mipmapLevel: 0,
+                            withBytes: bytes.baseAddress!, bytesPerRow: width * MemoryLayout<Float>.stride)
+        }
+        if contourTextures.count >= 16, let oldest = contourTextures.keys.first { contourTextures.removeValue(forKey: oldest) }
+        contourTextures[key] = texture
+        return texture
+    }
     func encode(texture: MTLTexture, parameters: Parameters, buffer: MTLCommandBuffer) {
+        guard let contour = contourTexture(width: texture.width, height: texture.height, size: parameters.size) else { return }
         let pass = MTLRenderPassDescriptor()
         pass.colorAttachments[0].texture = texture
         pass.colorAttachments[0].loadAction = .clear
@@ -101,6 +127,7 @@ final class HDRSelectionRenderer {
         guard let encoder = buffer.makeRenderCommandEncoder(descriptor: pass) else { return }
         var parameters = parameters
         encoder.setRenderPipelineState(pipeline)
+        encoder.setFragmentTexture(contour, index: 0)
         encoder.setFragmentBytes(&parameters, length: MemoryLayout<Parameters>.stride, index: 0)
         encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
@@ -180,9 +207,7 @@ final class HDRSelectionView: NSView {
         CATransaction.begin(); CATransaction.setDisableActions(true)
         metalLayer.frame = bounds
         glowLayer.frame = bounds.insetBy(dx: -10, dy: -10)
-        let body = CGPath(roundedRect: glowLayer.bounds.insetBy(dx: 10, dy: 10),
-                          cornerWidth: min(13, bounds.height / 2),
-                          cornerHeight: min(13, bounds.height / 2), transform: nil)
+        let body = ContinuousCorners.path(in: glowLayer.bounds.insetBy(dx: 10, dy: 10), radius: 13)
         glowLayer.path = body
         glowLayer.shadowPath = body
         let outside = CGMutablePath()

@@ -125,11 +125,14 @@ print("PASS: \(checks) total checks including whitelist/blacklist")
 
 check(Settings().effectiveHighlightStyle == .mist, "default highlight is mist")
 check(migrated.effectiveHighlightStyle == .mist, "legacy settings gain mist without migration write")
-for style in HighlightStyle.allCases {
+check(HighlightStyle.selectable == [.mist, .pearl, .marker], "graphite stays hidden from the theme picker")
+for style in HighlightStyle.selectable {
     var styled = rules; styled.highlightStyle = style.rawValue
     let decoded = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(styled))
     check(decoded.effectiveHighlightStyle == style && decoded.roots == rules.roots && decoded.kinds == rules.kinds, "style persists without changing search rules")
 }
+var legacyGraphite = Settings(); legacyGraphite.highlightStyle = "graphite"
+check(legacyGraphite.effectiveHighlightStyle == .mist, "hidden graphite falls back to mist")
 var unknownStyle = Settings(); unknownStyle.highlightStyle = "future-style"
 check(unknownStyle.effectiveHighlightStyle == .mist, "unknown style safely falls back")
 print("PASS: \(checks) total checks including highlight styles")

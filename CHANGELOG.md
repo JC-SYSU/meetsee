@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Rounded surfaces now follow Apple's continuous curvature instead of circular arcs: the search panel, result rows, swatches, settings controls, and keycap boxes.
+- Soft White gradient flipped: the top is dimmer and the bottom is brighter, with the same restrained contrast.
+- Graphite is hidden from the theme picker; existing Graphite preferences fall back to Celadon.
+
 ## 0.1.0
 
 Initial public release.

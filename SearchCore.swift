@@ -64,20 +64,22 @@ func within(_ path: String, _ root: String) -> Bool {
 
 enum HighlightStyle: String, CaseIterable {
     case mist, pearl, marker, graphite
+    /// Graphite remains decodable for existing preferences but is no longer offered.
+    static var selectable: [HighlightStyle] { [.mist, .pearl, .marker] }
     var title: String {
         switch self {
         case .mist: return "01  天青 · 柔光釉色"
         case .pearl: return "02  柔白 · 轻浮层"
         case .marker: return "03  蓝标 · 浓蓝底"
-        case .graphite: return "04  石墨 · 深色底"
+        case .graphite: return "04  石墨 · 深色底（旧版）"
         }
     }
     var detail: String {
         switch self {
         case .mist: return "蓝中含青的温润釉色，保留 HDR 柔光；无描边。"
-        case .pearl: return "用乳白亮度与极轻阴影建立层次。"
+        case .pearl: return "乳白渐变，上暗下亮，变化克制。"
         case .marker: return "克莱因蓝意向的实心底，白字与饱和蓝形成鲜明对比。"
-        case .graphite: return "实心石墨黑底，白色标题与柔和灰白路径。"
+        case .graphite: return "旧版实心石墨黑底；已隐藏，选择会回退到天青。"
         }
     }
 }
@@ -113,7 +115,10 @@ struct Settings: Codable {
         return value.isFinite ? (min(1, max(0, value)) * 10).rounded() / 10 : 0.3
     }
     var highlightStyle: String? = nil
-    var effectiveHighlightStyle: HighlightStyle { HighlightStyle(rawValue: highlightStyle ?? "") ?? .mist }
+    var effectiveHighlightStyle: HighlightStyle {
+        let style = HighlightStyle(rawValue: highlightStyle ?? "") ?? .mist
+        return style == .graphite ? .mist : style
+    }
     var whitelistEnabled: Bool? = nil
     var blacklistEnabled: Bool? = nil
     var excludeFinderAliases: Bool? = nil

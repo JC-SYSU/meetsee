@@ -49,6 +49,7 @@ import QuartzCore
         let warmBottom = try pixel(headroom:1,x:128,y:55,material:.pearl)
         precondition(warmTop[2]/warmTop[3] < warmBottom[2]/warmBottom[3],
             "Top must be subtly warmer than bottom, independently of opacity")
+        precondition(warmTop[3] < warmBottom[3], "Pearl must be dim at the top and brighter at the bottom")
         let litTop = try pixel(headroom:1.3,x:128,y:8,material:.pearl)
         let litBottom = try pixel(headroom:1.3,x:128,y:55,material:.pearl)
         precondition(litTop[2]/litTop[0] < litBottom[2]/litBottom[0],
@@ -73,6 +74,7 @@ import QuartzCore
         precondition(markerCorner[3] < 0.01)
         print("PASS: marker body EDR composite \(markerComposite), 1.3 ceiling, opaque blue, no bookmark, white-text contrast and rounded corners")
         print("PASS: Metal float rendering; SDR composite \(sdrComposite), EDR composite \(hdrComposite); transparent corners")
+        if CommandLine.arguments.contains("--offscreen-only") { return }
         // Exercise the real CAMetalLayer/Window path, then close the test window.
         let window = NSWindow(contentRect: NSRect(x: 100, y: 100, width: 320, height: 80),
             styleMask: .borderless, backing: .buffered, defer: false)
