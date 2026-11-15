@@ -63,15 +63,16 @@ func within(_ path: String, _ root: String) -> Bool {
 }
 
 enum HighlightStyle: String, CaseIterable {
-    case mist, pearl, marker, graphite
+    case mist, pearl, marker, graphite, porcelain
     /// Graphite remains decodable for existing preferences but is no longer offered.
-    static var selectable: [HighlightStyle] { [.mist, .pearl, .marker] }
+    static var selectable: [HighlightStyle] { [.mist, .pearl, .marker, .porcelain] }
     var title: String {
         switch self {
         case .mist: return "01  天青 · 柔光釉色"
         case .pearl: return "02  柔白 · 轻浮层"
         case .marker: return "03  蓝标 · 浓蓝底"
         case .graphite: return "04  石墨 · 深色底（旧版）"
+        case .porcelain: return "04  釉绿 · 蓝标形态"
         }
     }
     var detail: String {
@@ -80,8 +81,21 @@ enum HighlightStyle: String, CaseIterable {
         case .pearl: return "乳白渐变，上暗下亮，变化克制。"
         case .marker: return "克莱因蓝意向的实心底，白字与饱和蓝形成鲜明对比。"
         case .graphite: return "旧版实心石墨黑底；已隐藏，选择会回退到天青。"
+        case .porcelain: return "实心釉绿高亮与瓷白色半透明面板；内凹釉面渲染仍在打磨中。"
         }
     }
+}
+
+/// Temporary hidden switch. While the recessed glaze renderer is still being
+/// polished, the porcelain entry routes to a Marker-based lite treatment:
+/// solid glaze-green selection plus a translucent porcelain veil over the HUD.
+/// Flip `lite` to false to return to the full ceramic renderer.
+enum PorcelainTheme {
+    static let lite = true
+}
+
+extension HighlightStyle {
+    var usesPorcelainLite: Bool { self == .porcelain && PorcelainTheme.lite }
 }
 
 enum SearchMode: String { case native, lokii }

@@ -36,7 +36,7 @@ import Metal
         precondition(changedPixels > 50, "A circular arc renamed continuous is not a fix")
         print("PASS: 7 UI geometries equal native continuous paths, signed fields, unit normals, symmetric corners and unchanged orbit silhouette")
 
-        for style in [HighlightStyle.marker] {
+        for style in [HighlightStyle.marker, .porcelain] {
             let bitmap=NSBitmapImageRep(bitmapDataPlanes:nil,pixelsWide:22,pixelsHigh:20,bitsPerSample:8,samplesPerPixel:4,hasAlpha:true,isPlanar:false,colorSpaceName:.deviceRGB,bytesPerRow:0,bitsPerPixel:0)!
             NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current=NSGraphicsContext(bitmapImageRep:bitmap)
             SelectionPaint.draw(style,in:NSRect(x:0,y:0,width:22,height:20),dark:false,radius:6)
@@ -56,6 +56,7 @@ import Metal
             buffer.commit(); buffer.waitUntilCompleted()
             precondition(buffer.status == .completed)
             let field=ContinuousCorners.Field(size:CGSize(width:300,height:60),radius:13)
+            let ceramic=PorcelainMaterial.image(.green,size:CGSize(width:300,height:60),radius:13,scale:CGFloat(scale)).representations.first as! NSBitmapImageRep
             var pixels=[UInt16](repeating:0,count:width*height*4)
             pixels.withUnsafeMutableBytes { texture.getBytes($0.baseAddress!,bytesPerRow:width*8,from:MTLRegionMake2D(0,0,width,height),mipmapLevel:0) }
             for y in 0..<(26*scale) {
@@ -64,12 +65,14 @@ import Metal
                     let alpha=Float(Float16(bitPattern:pixels[(y*width+x)*4+3]))
                     let t=max(0,min(1,(d+0.6/Double(scale))/(1.2/Double(scale))))
                     precondition(abs(Double(alpha)-(1-t*t*(3-2*t))) < 0.002, "HDR coverage must match the continuous field at native resolution")
+                    let cpuAlpha=Double(ceramic.bitmapData![y*ceramic.bytesPerRow+x*4+3])/255
+                    precondition(abs(cpuAlpha-max(0,min(1,0.5-d*Double(scale)))) < 0.005)
                 }
             }
         }
         let view=HDRSelectionView(frame:NSRect(x:0,y:0,width:300,height:60)); view.layout()
         let expected=ContinuousCorners.path(in:view.glowLayer.bounds.insetBy(dx:10,dy:10),radius:13)
         precondition(view.glowLayer.path == expected && view.glowLayer.shadowPath == expected)
-        print("PASS: Metal masks at 1x/2x/3x, matching halo/shadow contour; no visible test windows")
+        print("PASS: Metal + ceramic masks at 1x/2x/3x, matching halo/shadow contour; no visible test windows")
     }
 }

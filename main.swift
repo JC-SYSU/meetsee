@@ -71,6 +71,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
     var scanErrors: [String] = []
     var panel: SearchPanel!
     var glassSurface: NSView?
+    var hudSurface: NSVisualEffectView?
+    var porcelainSurface: PorcelainSurface?
+    var panelContent: NSView?
+    var glassOutline: GlassOutline?
     var typeSelectionChanged = false
     var legacyMigrationRequested = false
     var scopeDescription: NSTextField!
@@ -310,6 +314,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
         panel.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         let view = TopView(frame: bounds)
         view.autoresizingMask = [.width, .height]
+        panelContent = view
         // Native glass draws beyond its own bounds. Keep it away from the window's
         // rectangular compositor boundary instead of clipping its content or shadow.
         let host = TopView(frame: NSRect(origin: .zero, size: windowBounds.size))
@@ -321,18 +326,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
             glass.autoresizingMask = [.width, .height]
             glassSurface = glass
             glass.tintColor = settings.effectiveGlassTintStrength == 0 ? nil : NSColor.white.withAlphaComponent(settings.effectiveGlassTintStrength)
-            glass.style = .regular; glass.cornerRadius = 22; glass.contentView = view
+            glass.style = .regular; glass.cornerRadius = 22
             host.addSubview(glass)
+            let hud = NSVisualEffectView(frame: surfaceFrame)
+            hud.autoresizingMask = [.width, .height]
+            hud.material = .hudWindow
+            hud.blendingMode = .behindWindow
+            hud.state = .active
+            hud.wantsLayer = true
+            hud.layer?.cornerRadius = 22
+            hud.layer?.cornerCurve = .continuous
+            hud.layer?.masksToBounds = true
+            hud.isHidden = true
+            hudSurface = hud
+            host.addSubview(hud)
+            let porcelain = PorcelainSurface(frame: surfaceFrame)
+            porcelain.autoresizingMask = [.width, .height]
+            porcelain.isHidden = true
+            porcelainSurface = porcelain
+            host.addSubview(porcelain)
+            // The content is a stable sibling above both surfaces. It is never
+            // reparented when the theme changes, so the field editor keeps its
+            // focus and layout.
+            view.frame = surfaceFrame
+            host.addSubview(view)
         } else {
             let material = NSVisualEffectView(frame: surfaceFrame)
             material.autoresizingMask = [.width, .height]
             material.material = .hudWindow; material.blendingMode = .behindWindow; material.state = .active
             material.wantsLayer = true; material.layer?.cornerRadius = 22; material.layer?.cornerCurve = .continuous; material.layer?.masksToBounds = true
+            let porcelain = PorcelainSurface(frame: material.bounds)
+            porcelain.autoresizingMask = [.width, .height]
+            porcelain.isHidden = true
+            porcelainSurface = porcelain
+            material.addSubview(porcelain)
             material.addSubview(view); host.addSubview(material)
         }
         let outline = GlassOutline(frame: surfaceFrame)
         outline.autoresizingMask = [.width, .height]
         outline.autoresizesSubviews = false
+        glassOutline = outline
         host.addSubview(outline)
         scanMotion = ScanMotionView(frame: surfaceFrame); scanMotion.autoresizingMask = [.width, .height]
         host.addSubview(scanMotion)
@@ -377,6 +410,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
             self?.syncScanMotion()
         }
         layoutResults(); panel.center()
+        applyPanelMaterial()
     }
     func layoutResults() {
         syncScanMotion()
@@ -419,7 +453,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
         panel.contentView?.layer?.removeAnimation(forKey: "popup")
         panel.alphaValue = 0
         prepareDimmingPanel()
-        NSApp.activate(ignoringOtherApps: true); panel.makeKeyAndOrderFront(nil); panel.makeFirstResponder(input)
+        NSApp.activate(ignoringOtherApps: true); panel.makeKeyAndOrderFront(nil); panel.makeFirstResponder(input); applyInputPalette()
         dimmingPanel?.order(.below, relativeTo: panel.windowNumber)
         commandHeld = NSEvent.modifierFlags.contains(.command); updateCandidateShortcutHints()
         animatePopup(appearing: true); syncScanMotion()
@@ -1346,6 +1380,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
             glass.tintColor = strength == 0 ? nil : NSColor.white.withAlphaComponent(strength)
         }
     }
+    /// Blue Tag uses a native HUD surface. Porcelain Lite uses an opaque
+    /// porcelain panel; the other themes keep Liquid Glass.
+    func applyPanelMaterial() {
+        let style = settings.effectiveHighlightStyle
+        let hud = style == .marker
+        let porcelain = style == .porcelain
+        if #available(macOS 26.0, *), let glass = glassSurface as? NSGlassEffectView,
+           let hudView = hudSurface {
+            // Keep the native glass visible: its system-rendered outer shadow is
+            // the same one the other themes use. The HUD surface sits on top.
+            glass.isHidden = false
+            hudView.isHidden = !hud
+        }
+        porcelainSurface?.isHidden = !porcelain
+        porcelainSurface?.alphaValue = 1
+        porcelainSurface?.flat = style.usesPorcelainLite
+        glassOutline?.isHidden = porcelain
+        panel.appearance = porcelain ? NSAppearance(named: .aqua) : nil
+        glassOutline?.needsDisplay = true
+        panelContent?.needsDisplay = true
+        applyInputPalette()
+    }
+    func applyInputPalette() {
+        input?.textColor = .labelColor
+        (input?.currentEditor() as? NSTextView)?.textColor = .labelColor
+    }
     @objc func changeAllTypes() {
         typeSelectionChanged = true
         if settings.legacyKinds != nil {
@@ -1619,6 +1679,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSTe
         }
         let contactsJustEnabled = settings.searchContacts != true && next.searchContacts == true
         settings = next
+        applyPanelMaterial()
         configureContacts(requestPermission: contactsJustEnabled)
         if settings.effectiveSearchMode == .native { lokiiScopeReady = false }
         if update.modeChanged || update.scopeChanged {

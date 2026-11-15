@@ -125,7 +125,7 @@ print("PASS: \(checks) total checks including whitelist/blacklist")
 
 check(Settings().effectiveHighlightStyle == .mist, "default highlight is mist")
 check(migrated.effectiveHighlightStyle == .mist, "legacy settings gain mist without migration write")
-check(HighlightStyle.selectable == [.mist, .pearl, .marker], "graphite stays hidden from the theme picker")
+check(HighlightStyle.selectable == [.mist, .pearl, .marker, .porcelain], "porcelain is selectable alongside existing themes")
 for style in HighlightStyle.selectable {
     var styled = rules; styled.highlightStyle = style.rawValue
     let decoded = try JSONDecoder().decode(Settings.self, from: JSONEncoder().encode(styled))

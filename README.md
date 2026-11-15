@@ -16,7 +16,7 @@ Meet&See runs as a menu bar app. Press the hotkey, type, and open the result. It
 - **Application search.** Matches localized application names, bundle names, English names, Pinyin, and initials.
 - **Contacts.** Optional local Contacts search by full name or full Pinyin. `Command-C` copies a clean phone number.
 - **System Settings search.** Opens first- and second-level System Settings pages by name.
-- **Three highlight themes.** Celadon (天青) and Soft White (柔白) use native HDR/EDR rendering on supported displays. Blue Tag (蓝标) uses the solid Klein-blue highlight. Graphite (石墨) is hidden; existing Graphite preferences fall back to Celadon.
+- **Four highlight themes.** Celadon (天青), Soft White (柔白), Blue Tag (蓝标), and Porcelain (釉绿). Celadon, Soft White, and Blue Tag use native HDR/EDR rendering on supported displays. Blue Tag and Porcelain use a solid body; Porcelain pairs a flat ivory panel with a glaze-green selection and ink text. Graphite (石墨) is hidden; existing Graphite preferences fall back to Celadon.
 - **Native materials.** Uses `NSGlassEffectView` on macOS 26 and falls back to native vibrancy on older systems.
 - **Local only.** No telemetry, no network requests, no file-content upload.
 

@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Rounded surfaces now follow Apple's continuous curvature instead of circular arcs: the search panel, result rows, swatches, settings controls, and keycap boxes.
+- SDR displays get a dedicated brighter, more saturated Celadon instead of the unboosted EDR fallback; EDR output is unchanged.
+- Porcelain (釉绿) highlight theme: a flat ivory panel with a glaze-green selection, 1pt ink outline, and ink text. The selection lifts with EDR headroom on supported displays; SDR screens use a brighter glaze fallback. The recessed ceramic renderer stays behind the `PorcelainTheme.lite` switch.
 - Soft White gradient flipped: the top is dimmer and the bottom is brighter, with the same restrained contrast.
 - Graphite is hidden from the theme picker; existing Graphite preferences fall back to Celadon.
 

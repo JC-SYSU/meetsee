@@ -3,7 +3,7 @@ import Metal
 import QuartzCore
 
 enum HDRSelectionMaterial: Float {
-    case celadon = 0, pearl = 1, marker = 2
+    case celadon = 0, pearl = 1, marker = 2, porcelainLite = 3
 }
 
 /// Shared, on-demand half-float renderer. No timer, display link or capture API.
@@ -15,7 +15,8 @@ final class HDRSelectionRenderer {
     private var contourTextures: [String: MTLTexture] = [:]
     struct Parameters { var size: SIMD2<Float>; var headroom: Float; var dark: Float; var material: Float = 0 }
     static func usableHeadroom(_ current: CGFloat, material: HDRSelectionMaterial = .celadon) -> Float {
-        Float(min(material == .celadon ? 1.6 : 1.3, max(1, current.isFinite ? current : 1)))
+        let cap: CGFloat = (material == .celadon || material == .porcelainLite) ? 1.6 : 1.3
+        return Float(min(cap, max(1, current.isFinite ? current : 1)))
     }
     private init() throws {
         guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
@@ -38,6 +39,20 @@ final class HDRSelectionRenderer {
             float distance=contour.read(pixel).r;
             float aa=.6*p.size.x/float(contour.get_width());
             float coverage=1.-smoothstep(-aa,aa,distance);
+            if(p.material>2.5) {
+                // Porcelain lite: lift the glaze body with the full EDR headroom
+                // so ink text keeps contrast on the selected row. SDR screens
+                // get a brighter, more saturated fallback glaze instead.
+                float3 green=pow(float3(158./255.,184./255.,153./255.),float3(2.2));
+                float3 sdrBright=pow(float3(178./255.,214./255.,166./255.),float3(2.2));
+                float3 base=p.headroom>1.001 ? green*p.headroom : sdrBright;
+                // 1pt ink outline just inside the continuous edge.
+                float depth=max(0.,-distance);
+                float outline=1.-smoothstep(1.2,2.2,depth);
+                float3 ink=pow(float3(46./255.,74./255.,53./255.),float3(2.2));
+                float3 color=mix(base,ink,outline);
+                return float4(color*coverage,coverage);
+            }
             if(p.material>1.5) {
                 // Opaque Klein-blue-inspired #002FA7. Lift the blue spectrum
                 // proportionally, never add neutral white or desaturate the body.
@@ -50,7 +65,7 @@ final class HDRSelectionRenderer {
                 // Top dim -> bottom bright, before illumination. Keep
                 // translucency separate from a restrained, neutral EDR lift.
                 float3 tint=mix(float3(1.,253./255.,250./255.),float3(1.,254./255.,252./255.),uv.y);
-                float alpha=mix(mix(.50,.84,uv.y),mix(.07,.12,uv.y),p.dark);
+                float alpha=mix(mix(.6445,.6955,uv.y),mix(.09125,.09875,uv.y),p.dark);
                 float3 linear=pow(tint,float3(2.2));
                 float3 light=linear*alpha*(1.+(min(p.headroom,1.3)-1.)*mix(1.,.10,p.dark));
                 // Retain the original fine white outline without a separate
@@ -78,11 +93,20 @@ final class HDRSelectionRenderer {
             // EDR surplus is broad face illumination, not a rim or a white spot.
             // Cyan channels can exceed reference white in the float drawable.
             float field=clamp(irradiance/.57,.55,1.);
+            // SDR panels receive no EDR surplus, so the plain tone-mapped body
+            // reads gray. Give them a dedicated, more saturated and brighter
+            // celadon; the EDR path keeps its existing parameters untouched.
+            float sdrScreen=step(p.headroom,1.001);
+            float3 body=sdr;
+            if(sdrScreen>.5) {
+                float luma=dot(body,float3(.2126,.7152,.0722));
+                body=max(luma+(body-luma)*1.45,0.)*1.28;
+            }
             float3 surplus=float3(.95,1.17,1.22)*(p.headroom-1.)*field*mix(1.,.35,p.dark);
             // A thinner, less cloudy body exposes more native glass. Keep the
             // independent EDR illuminant and its previous energy ceiling intact.
             float alpha=mix(.50,.57,p.dark);
-            float3 premultiplied=max(sdr-(1.-alpha)*pow(reference,float3(2.2)),0.)+surplus;
+            float3 premultiplied=max(body-(1.-alpha)*pow(reference,float3(2.2)),0.)+surplus;
             // Float premultiplied RGB may exceed alpha; this is intentional EDR.
             premultiplied=min(premultiplied,float3(p.headroom*mix(.58,.65,p.dark)));
             return float4(premultiplied*coverage,alpha*coverage);
