@@ -100,7 +100,7 @@ final class HDRSelectionRenderer {
             float3 body=sdr;
             if(sdrScreen>.5) {
                 float luma=dot(body,float3(.2126,.7152,.0722));
-                body=max(luma+(body-luma)*1.45,0.)*1.28;
+                body=max(luma+(body-luma)*1.35,0.)*1.40;
             }
             float3 surplus=float3(.95,1.17,1.22)*(p.headroom-1.)*field*mix(1.,.35,p.dark);
             // A thinner, less cloudy body exposes more native glass. Keep the

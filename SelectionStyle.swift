@@ -140,7 +140,7 @@ enum CeladonMaterial {
                 if sdrBoost {
                     let luma = 0.2126 * mapped[0] + 0.7152 * mapped[1] + 0.0722 * mapped[2]
                     for channel in 0..<3 {
-                        mapped[channel] = max(luma + (mapped[channel] - luma) * 1.45, 0) * 1.28
+                        mapped[channel] = max(luma + (mapped[channel] - luma) * 1.35, 0) * 1.40
                     }
                 }
                 for channel in 0..<3 {
