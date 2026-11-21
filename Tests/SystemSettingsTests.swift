@@ -8,6 +8,11 @@ import Foundation
             let result = mergeSettings(empty, pages: SettingsDestination.catalog, query: query, settings: settings)
             precondition(result.total > 0 && result.items.first!.file == nil)
         }
+        for query in ["辅助功能", "Accessibility"] {
+            let result = mergeSettings(empty, pages: SettingsDestination.catalog, query: query, settings: settings)
+            guard case .setting(let page)? = result.items.first else { fatalError("Missing Accessibility settings") }
+            precondition(page.name == "辅助功能" && page.url.absoluteString == "x-apple.systempreferences:com.apple.Accessibility-Settings.extension")
+        }
         precondition(mergeSettings(empty, pages: SettingsDestination.catalog, query: "", settings: settings).total == 0)
         precondition(!SettingsDestination.catalog.contains { $0.url.absoluteString.contains("?") })
         settings.searchSystemSettings = false

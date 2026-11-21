@@ -15,7 +15,7 @@ final class GlassOutline: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override func draw(_ dirtyRect: NSRect) {
         (NSColor.separatorColor.blended(withFraction: 0.12, of: .labelColor) ?? .separatorColor).setStroke()
-        let outline = NSBezierPath(cgPath: SearchSurfaceGeometry.path(in: bounds))
+        let outline = ContinuousCorners.bezier(from: SearchSurfaceGeometry.path(in: bounds))
         outline.lineWidth = 0.5
         outline.stroke()
     }

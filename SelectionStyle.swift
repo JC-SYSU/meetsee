@@ -448,7 +448,7 @@ final class StylePreview: NSView {
     var fontName: String = "Maple Mono NF CN" { didSet { foreground.needsDisplay = true } }
     private let hdr = HDRSelectionView(frame: .zero)
     private let foreground = PreviewForeground(frame: .zero)
-    private var nativeGlass: NSGlassEffectView?
+    private var nativeGlass: NSView?
     private let hudFill = HUDPreviewFill(frame: .zero)
     private let porcelainFill = PorcelainSurface(frame: .zero)
     override init(frame: NSRect) {
@@ -499,7 +499,7 @@ final class StylePreview: NSView {
         hdr.frame = NSRect(x: 30, y: 60, width: bounds.width - 60, height: 38)
     }
     private func updateNativeGlassTint() {
-        if #available(macOS 26.0, *), let glass = nativeGlass {
+        if #available(macOS 26.0, *), let glass = nativeGlass as? NSGlassEffectView {
             glass.tintColor = glassTintStrength <= 0 ? nil : NSColor.white.withAlphaComponent(glassTintStrength)
             glass.needsDisplay = true
         }

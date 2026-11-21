@@ -5,6 +5,17 @@ import Metal
 @main struct ContinuousCornersTests {
     static func main() throws {
         _ = NSApplication.shared
+        let quadratic = CGMutablePath()
+        quadratic.move(to: .zero)
+        quadratic.addQuadCurve(to: CGPoint(x: 6, y: 0), control: CGPoint(x: 3, y: 3))
+        quadratic.closeSubpath()
+        let bezier = ContinuousCorners.legacyBezier(from: quadratic)
+        var cubicPoints = [NSPoint](repeating: .zero, count: 3)
+        precondition(bezier.elementCount >= 3)
+        _ = bezier.element(at: 1, associatedPoints: &cubicPoints)
+        precondition(cubicPoints == [CGPoint(x: 2, y: 2), CGPoint(x: 4, y: 2), CGPoint(x: 6, y: 0)])
+        precondition(bezier.element(at: 2) == .closePath)
+
         let sizes: [(CGFloat,CGFloat,CGFloat)] = [(720,320,22),(690,58,13),(440,134,19),(144,36,8),(16,16,4),(25,13,2.5),(88,26,6)]
         var changedPixels = 0
         for (w,h,r) in sizes {
@@ -12,12 +23,16 @@ import Metal
             let native = RoundedRectangle(cornerRadius:r,style:.continuous).path(in:rect).cgPath
             let path = ContinuousCorners.path(in:rect,radius:r)
             precondition(path == native, "Custom drawing must use Apple's public continuous path")
+            let compatible = ContinuousCorners.legacyBezier(from: path)
             let circular = CGPath(roundedRect:rect,cornerWidth:r,cornerHeight:r,transform:nil)
             let field = ContinuousCorners.Field(size:rect.size,radius:r)
             for y in stride(from:0.125,to:Double(min(h,2*r)),by:0.25) {
                 for x in stride(from:0.125,to:Double(min(w,2*r)),by:0.25) {
                     let point=CGPoint(x:x,y:y), value=field.sample(x:x,y:y)
                     precondition((value.distance <= 0) == native.contains(point), "CPU/Metal distance-field sign must agree with the native contour")
+                    if abs(value.distance) > 0.25 {
+                        precondition(compatible.contains(point) == native.contains(point), "The macOS 13 path conversion must preserve the contour")
+                    }
                     precondition(abs(hypot(value.nx,value.ny)-1) < 1e-8)
                     if circular.contains(point) != native.contains(point) { changedPixels += 1 }
                     let opposite=field.sample(x:Double(w)-x,y:Double(h)-y)

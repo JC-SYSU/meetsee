@@ -10,7 +10,34 @@ enum ContinuousCorners {
                                 style: .continuous).path(in: rect).cgPath
     }
     static func bezier(in rect: CGRect, radius: CGFloat) -> NSBezierPath {
-        NSBezierPath(cgPath: path(in: rect, radius: radius))
+        bezier(from: path(in: rect, radius: radius))
+    }
+
+    static func bezier(from path: CGPath) -> NSBezierPath {
+        if #available(macOS 14.0, *) { return NSBezierPath(cgPath: path) }
+        return legacyBezier(from: path)
+    }
+
+    /// AppKit's CGPath initializer requires macOS 14; preserve the same contour on 13.
+    static func legacyBezier(from path: CGPath) -> NSBezierPath {
+        let result = NSBezierPath()
+        path.applyWithBlock { element in
+            let e = element.pointee
+            switch e.type {
+            case .moveToPoint: result.move(to: e.points[0])
+            case .addLineToPoint: result.line(to: e.points[0])
+            case .addCurveToPoint:
+                result.curve(to: e.points[2], controlPoint1: e.points[0], controlPoint2: e.points[1])
+            case .addQuadCurveToPoint:
+                let start = result.currentPoint, control = e.points[0], end = e.points[1]
+                let c1 = CGPoint(x: (start.x + 2 * control.x) / 3, y: (start.y + 2 * control.y) / 3)
+                let c2 = CGPoint(x: (end.x + 2 * control.x) / 3, y: (end.y + 2 * control.y) / 3)
+                result.curve(to: end, controlPoint1: c1, controlPoint2: c2)
+            case .closeSubpath: result.close()
+            @unknown default: break
+            }
+        }
+        return result
     }
 
     private struct Curve {
